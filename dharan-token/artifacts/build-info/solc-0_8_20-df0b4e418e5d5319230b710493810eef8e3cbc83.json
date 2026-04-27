@@ -1,11 +1,11 @@
 {
   "_format": "hh3-sol-build-info-1",
-  "id": "solc-0_8_20-f484c345afd84882206bda9d6dcfebe7930e82f6",
+  "id": "solc-0_8_20-df0b4e418e5d5319230b710493810eef8e3cbc83",
   "solcVersion": "0.8.20",
   "solcLongVersion": "0.8.20+commit.a1b79de6",
   "compilerType": "solc",
   "userSourceNameMap": {
-    "contracts/DharanToken.sol": "project/contracts/DharanToken.sol"
+    "contracts/SpidyToken.sol": "project/contracts/SpidyToken.sol"
   },
   "input": {
     "language": "Solidity",
@@ -57,8 +57,8 @@
       "npm/@openzeppelin/contracts@5.6.1/utils/Context.sol": {
         "content": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v5.0.1) (utils/Context.sol)\n\npragma solidity ^0.8.20;\n\n/**\n * @dev Provides information about the current execution context, including the\n * sender of the transaction and its data. While these are generally available\n * via msg.sender and msg.data, they should not be accessed in such a direct\n * manner, since when dealing with meta-transactions the account sending and\n * paying for execution may not be the actual sender (as far as an application\n * is concerned).\n *\n * This contract is only required for intermediate, library-like contracts.\n */\nabstract contract Context {\n    function _msgSender() internal view virtual returns (address) {\n        return msg.sender;\n    }\n\n    function _msgData() internal view virtual returns (bytes calldata) {\n        return msg.data;\n    }\n\n    function _contextSuffixLength() internal view virtual returns (uint256) {\n        return 0;\n    }\n}\n"
       },
-      "project/contracts/DharanToken.sol": {
-        "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.20;\r\n\r\nimport \"@openzeppelin/contracts/token/ERC20/ERC20.sol\";\r\nimport \"@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol\";\r\nimport \"@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol\";\r\n\r\n\r\n\r\ncontract DharanToken is ERC20Capped {\r\n\r\n    address payable public owner;\r\n    uint256 public blockReward;\r\n\r\n    constructor(uint256 cap, uint256 reward) ERC20(\"DharanToken\", \"DHT\") ERC20Capped(cap * (10 ** decimals())) {\r\n        owner = payable(msg.sender);\r\n        _mint(owner, 70000000 * (10 ** decimals()) /*initial supply */);\r\n        blockReward = reward * (10 ** decimals());\r\n    }\r\n\r\n    function _mintMinerRewrd() internal {\r\n        _mint(block.coinbase, blockReward);\r\n    }\r\n\r\n    function _beforeTokenTransfer(address from, address to, uint256 value) internal {}\r\n\r\n    function setBlockReward(uint256 reward) public onlyOwner {\r\n        blockReward = reward * (10 ** decimals());\r\n\r\n    }\r\n\r\n    modifier onlyOwner{\r\n        require(msg.sender == owner, \"only owner can call this function\");\r\n        _;\r\n    }\r\n}\r\n"
+      "project/contracts/SpidyToken.sol": {
+        "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.20;\r\n\r\nimport \"@openzeppelin/contracts/token/ERC20/ERC20.sol\";\r\nimport \"@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol\";\r\nimport \"@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol\";\r\n\r\n\r\n\r\ncontract DharanToken is ERC20Capped {\r\n\r\n    address payable public owner;\r\n    uint256 public blockReward;\r\n\r\n    constructor(uint256 cap, uint256 reward) ERC20(\"Spidy\", \"SPY\") ERC20Capped(cap * (10 ** decimals())) {\r\n        owner = payable(msg.sender);\r\n        _mint(owner, 70000000 * (10 ** decimals()) /*initial supply */);\r\n        blockReward = reward * (10 ** decimals());\r\n    }\r\n\r\n    function _mintMinerRewrd() internal {\r\n        _mint(block.coinbase, blockReward);\r\n    }\r\n\r\n    function _beforeTokenTransfer(address from, address to, uint256 value) internal {}\r\n\r\n    function setBlockReward(uint256 reward) public onlyOwner {\r\n        blockReward = reward * (10 ** decimals());\r\n\r\n    }\r\n\r\n    modifier onlyOwner{\r\n        require(msg.sender == owner, \"only owner can call this function\");\r\n        _;\r\n    }\r\n}\r\n"
       }
     }
   }

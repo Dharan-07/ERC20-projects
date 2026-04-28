@@ -2,21 +2,26 @@
 pragma solidity ^0.8.18;
 
 contract SpidyToken{
+    
     string private constant _name = "Spidy";
     string private constant _symbol = "SPD";
-    uint256 private constant _decimal = 18;
+    uint8 private constant _decimals = 18;
 
     address private owner;
     uint256 private _totalSupply;
     uint256 private _initialSupply;
 
-    mapping(address => uint256) private balances;
+    event Transfer(address indexed from,address indexed to,uint256 value);
+
+    mapping(address => uint256) private balanceOf;
 
     constructor(uint256 _totalTokenSupply){
         owner = msg.sender;
-        _totalSupply = _totalTokenSupply * ( 10** _decimal);
+        _totalSupply = _totalTokenSupply * ( 10** _decimals);
         _initialSupply = _totalSupply / 10;
-        balances[owner] = _initialSupply;
+        balanceOf[owner] = _initialSupply;
+
+        emit Transfer(address(0), owner, _initialSupply);
     }
 
     function name() public pure returns (string memory){
@@ -27,15 +32,29 @@ contract SpidyToken{
         return _symbol;
     }
 
-    function decimal() public pure returns (uint256){
-        return _decimal;
+    function decimals() public pure returns (uint8){
+        return _decimals;
     }
 
     function totalSupply() public view returns(uint256){
         return _totalSupply;
     }
 
-    function balanceOf(address account) public view returns(uint256){
-        return balances[account];
+    function balanceOf_view (address account) public view returns(uint256){
+        return balanceOf[account];
+    }
+
+    function transfer(address _to, uint256 _value) public returns(bool success){
+
+        require(_value > 0, "Transfer value must be > 0");
+        require( _to != address(0),"Cannot transfer to address value Zero");
+        require(balanceOf[msg.sender] >= _value,"Insufficient balance");
+        
+        balanceOf[msg.sender] -= _value;
+        balanceOf[_to] += _value;
+
+        emit Transfer(msg.sender,_to,_value);
+        return true;
+        
     }
 }

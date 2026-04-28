@@ -1,36 +1,41 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+//SPDX-License-Identifier: MIT
+pragma solidity ^0.8.18;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+contract SpidyToken{
+    string private constant _name = "Spidy";
+    string private constant _symbol = "SPD";
+    uint256 private constant _decimal = 18;
 
+    address private owner;
+    uint256 private _totalSupply;
+    uint256 private _initialSupply;
 
+    mapping(address => uint256) private balances;
 
-contract DharanToken is ERC20Capped {
-
-    address payable public owner;
-    uint256 public blockReward;
-
-    constructor(uint256 cap, uint256 reward) ERC20("Spidy", "SPY") ERC20Capped(cap * (10 ** decimals())) {
-        owner = payable(msg.sender);
-        _mint(owner, 70000000 * (10 ** decimals()) /*initial supply */);
-        blockReward = reward * (10 ** decimals());
+    constructor(uint256 _totalTokenSupply){
+        owner = msg.sender;
+        _totalSupply = _totalTokenSupply * ( 10** _decimal);
+        _initialSupply = _totalSupply / 10;
+        balances[owner] = _initialSupply;
     }
 
-    function _mintMinerRewrd() internal {
-        _mint(block.coinbase, blockReward);
+    function name() public pure returns (string memory){
+        return _name;
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 value) internal {}
-
-    function setBlockReward(uint256 reward) public onlyOwner {
-        blockReward = reward * (10 ** decimals());
-
+    function symbol() public pure returns (string memory){
+        return _symbol;
     }
 
-    modifier onlyOwner{
-        require(msg.sender == owner, "only owner can call this function");
-        _;
+    function decimal() public pure returns (uint256){
+        return _decimal;
+    }
+
+    function totalSupply() public view returns(uint256){
+        return _totalSupply;
+    }
+
+    function balanceOf(address account) public view returns(uint256){
+        return balances[account];
     }
 }

@@ -70,4 +70,17 @@ contract SpidyToken{
         emit Approval(msg.sender,_spender,_value);
         return true;
     }
+    
+    function transferfrom(address _from,address _to,uint256 _value)public returns(bool success){
+        require( _to != address(0), "Cannot transfer to zero value address");
+        require(_value <= balanceOf[_from],"Insufficient balance");
+        require(_value <= _allowance[_from][msg.sender],"allowance exceeded");
+
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
+        _allowance[_from][msg.sender] -= _value;
+
+        emit Transfer(_from,_to,_value);
+        return true;
+    }
 }

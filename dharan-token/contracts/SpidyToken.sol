@@ -8,12 +8,14 @@ contract SpidyToken{
     uint8 private constant _decimals = 18;
 
     address private owner;
-    uint256 private _totalSupply;
+    uint256 private immutable _totalSupply;
     uint256 private _initialSupply;
 
     event Transfer(address indexed from,address indexed to,uint256 value);
+    event Approval(address indexed owner,address indexed spender, uint256 value);
 
     mapping(address => uint256) private balanceOf;
+    mapping(address => mapping(address => uint256)) private _allowance;
 
     constructor(uint256 _totalTokenSupply){
         owner = msg.sender;
@@ -55,6 +57,17 @@ contract SpidyToken{
 
         emit Transfer(msg.sender,_to,_value);
         return true;
-        
+    }
+
+    function allowance (address _owner,address _spender)public view returns(uint256){
+        return _allowance[_owner][_spender];
+    }
+
+    function approve(address _spender, uint256 _value) public returns(bool success){
+        require(_spender != address(0) , "Cannot approve amount to a zero address");
+        _allowance[msg.sender][_spender] = _value;
+
+        emit Approval(msg.sender,_spender,_value);
+        return true;
     }
 }

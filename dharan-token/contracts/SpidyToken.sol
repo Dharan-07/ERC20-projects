@@ -12,10 +12,6 @@ contract SpidyToken{
     uint256 private _initialSupply;
     uint256 private _mintedSupply;
 
-    uint256 private transferValueWithDecimal;
-    uint256 private approveValueWithDecimal;
-    uint256 private transferfrom_withdecimal;
-
     uint256 private constant Mint_Amount = 10 * (10 ** _decimals);
     uint256 private constant Mint_Limit = 100 * (10 ** _decimals);
 
@@ -59,10 +55,10 @@ contract SpidyToken{
 
     function transfer(address _to, uint256 _value) public returns(bool success){
 
-        transferValueWithDecimal = _value * (10 ** _decimals) ;
-        require(_value > 0, "Transfer value must be > 0");
+        uint256 transferValueWithDecimal = _value * (10 ** _decimals) ;
+        require(transferValueWithDecimal > 0, "Transfer value must be > 0");
         require( _to != address(0),"Cannot transfer to address value Zero");
-        require(balanceOf[msg.sender] >= _value,"Insufficient balance");
+        require(balanceOf[msg.sender] >= transferValueWithDecimal,"Insufficient balance");
         
         balanceOf[msg.sender] -= transferValueWithDecimal;
         balanceOf[_to] += transferValueWithDecimal;
@@ -77,7 +73,7 @@ contract SpidyToken{
 
     function approve(address _spender, uint256 _value) public returns(bool success){
 
-        approveValueWithDecimal = _value * (10 ** _decimals);
+        uint256 approveValueWithDecimal = _value * (10 ** _decimals);
         require(_spender != address(0) , "Cannot approve amount to a zero address");
         _allowance[msg.sender][_spender] = approveValueWithDecimal;
 
@@ -87,10 +83,10 @@ contract SpidyToken{
     
     function transferfrom(address _from,address _to,uint256 _value)public returns(bool success){
 
-        transferfrom_withdecimal = _value * (10 ** _decimals);
+        uint256 transferfrom_withdecimal = _value * (10 ** _decimals);
         require( _to != address(0), "Cannot transfer to zero value address");
-        require(_value <= balanceOf[_from],"Insufficient balance");
-        require(_value <= _allowance[_from][msg.sender],"allowance exceeded");
+        require(transferfrom_withdecimal <= balanceOf[_from],"Insufficient balance");
+        require(transferfrom_withdecimal <= _allowance[_from][msg.sender],"allowance exceeded");
 
         balanceOf[_from] -= transferfrom_withdecimal;
         balanceOf[_to] += transferfrom_withdecimal;

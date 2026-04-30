@@ -12,6 +12,10 @@ contract SpidyToken{
     uint256 private _initialSupply;
     uint256 private _mintedSupply;
 
+    uint256 private transferValueWithDecimal;
+    uint256 private approveValueWithDecimal;
+    uint256 private transferfrom_withdecimal;
+
     uint256 private constant Mint_Amount = 10 * (10 ** _decimals);
     uint256 private constant Mint_Limit = 100 * (10 ** _decimals);
 
@@ -55,39 +59,44 @@ contract SpidyToken{
 
     function transfer(address _to, uint256 _value) public returns(bool success){
 
+        transferValueWithDecimal = _value * (10 ** _decimals) ;
         require(_value > 0, "Transfer value must be > 0");
         require( _to != address(0),"Cannot transfer to address value Zero");
         require(balanceOf[msg.sender] >= _value,"Insufficient balance");
         
-        balanceOf[msg.sender] -= _value;
-        balanceOf[_to] += _value;
+        balanceOf[msg.sender] -= transferValueWithDecimal;
+        balanceOf[_to] += transferValueWithDecimal;
 
-        emit Transfer(msg.sender,_to,_value);
+        emit Transfer(msg.sender,_to,transferValueWithDecimal);
         return true;
     }
 
     function allowance (address _owner,address _spender)public view returns(uint256){
-        return _allowance[_owner][_spender];
+        return _allowance[_owner][_spender]  ;
     }
 
     function approve(address _spender, uint256 _value) public returns(bool success){
-        require(_spender != address(0) , "Cannot approve amount to a zero address");
-        _allowance[msg.sender][_spender] = _value;
 
-        emit Approval(msg.sender,_spender,_value);
+        approveValueWithDecimal = _value * (10 ** _decimals);
+        require(_spender != address(0) , "Cannot approve amount to a zero address");
+        _allowance[msg.sender][_spender] = approveValueWithDecimal;
+
+        emit Approval(msg.sender,_spender,approveValueWithDecimal);
         return true;
     }
     
     function transferfrom(address _from,address _to,uint256 _value)public returns(bool success){
+
+        transferfrom_withdecimal = _value * (10 ** _decimals);
         require( _to != address(0), "Cannot transfer to zero value address");
         require(_value <= balanceOf[_from],"Insufficient balance");
         require(_value <= _allowance[_from][msg.sender],"allowance exceeded");
 
-        balanceOf[_from] -= _value;
-        balanceOf[_to] += _value;
-        _allowance[_from][msg.sender] -= _value;
+        balanceOf[_from] -= transferfrom_withdecimal;
+        balanceOf[_to] += transferfrom_withdecimal;
+        _allowance[_from][msg.sender] -= transferfrom_withdecimal;
 
-        emit Transfer(_from,_to,_value);
+        emit Transfer(_from,_to,transferfrom_withdecimal);
         return true;
     }
 

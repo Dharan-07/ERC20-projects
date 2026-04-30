@@ -10,18 +10,25 @@ contract SpidyToken{
     address private owner;
     uint256 private immutable _totalSupply;
     uint256 private _initialSupply;
+    uint256 private _mintedSupply;
+
+    uint256 private constant Mint_Amount = 10 * (10 ** _decimals);
+    uint256 private constant Mint_Limit = 100 * (10 ** _decimals);
 
     event Transfer(address indexed from,address indexed to,uint256 value);
     event Approval(address indexed owner,address indexed spender, uint256 value);
+    event Mint(address indexed to,uint256 value);
 
     mapping(address => uint256) private balanceOf;
     mapping(address => mapping(address => uint256)) private _allowance;
+    mapping(address => uint256) private _mintedByUser;
 
     constructor(uint256 _totalTokenSupply){
         owner = msg.sender;
         _totalSupply = _totalTokenSupply * ( 10** _decimals);
         _initialSupply = _totalSupply / 10;
         balanceOf[owner] = _initialSupply;
+        _mintedSupply = _initialSupply;
 
         emit Transfer(address(0), owner, _initialSupply);
     }
@@ -82,5 +89,23 @@ contract SpidyToken{
 
         emit Transfer(_from,_to,_value);
         return true;
+    }
+
+    function mint()public returns(bool success){
+        require(_mintedSupply + Mint_Amount <= _totalSupply,"No more totalSupply");
+        require(_mintedByUser[msg.sender] + Mint_Amount <= Mint_Limit,"Maximum limit reached");
+
+        balanceOf[msg.sender] += Mint_Amount;
+        _mintedSupply += Mint_Amount;
+        _mintedByUser[msg.sender] += Mint_Amount;
+
+        emit Mint(msg.sender,Mint_Amount);
+        emit Transfer(address(0),msg.sender,Mint_Amount);
+        return true;
+    }
+
+    function tokenLeft()public view returns(uint256){
+        uint256 remainingTokenLeft = _totalSupply - _mintedSupply;
+        return remainingTokenLeft;
     }
 }

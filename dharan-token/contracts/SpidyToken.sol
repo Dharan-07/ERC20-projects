@@ -113,4 +113,25 @@ contract SpidyToken{
         uint256 remainingTokenLeft = _totalSupply - _mintedSupply;
         return remainingTokenLeft;
     }
+
+    function increaseAllowance(address spender, uint256 value) public returns (bool success) {
+        require(spender != address(0), "Cannot increase allowance to address value Zero");
+        
+        uint256 increaseValueWithDecimal = value * (10 ** _decimals);
+        _allowance[msg.sender][spender] += increaseValueWithDecimal;
+
+        emit Approval(msg.sender, spender, _allowance[msg.sender][spender]);
+        return true;
+    }
+
+    function decreaseAllowance(address spender,uint256 value)public returns(bool success){
+        require(spender != address(0),"cannot decrease allowance to address value Zero");
+
+        uint256 decreaseValueWithDecimal = value * (10 ** _decimals);
+        require(_allowance[msg.sender][spender] >= decreaseValueWithDecimal,"Insufficient allowance balance to decrease");
+        _allowance[msg.sender][spender] -= decreaseValueWithDecimal;
+
+        emit Approval(msg.sender, spender, _allowance[msg.sender][spender]);
+        return true;
+    }
 }

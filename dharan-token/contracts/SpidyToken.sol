@@ -8,7 +8,7 @@ contract SpidyToken{
     uint8 private constant _decimals = 18;
 
     address private owner;
-    uint256 private immutable _totalSupply;
+    uint256 private _totalSupply;
     uint256 private _initialSupply;
     uint256 private _mintedSupply;
 
@@ -132,6 +132,17 @@ contract SpidyToken{
         _allowance[msg.sender][spender] -= decreaseValueWithDecimal;
 
         emit Approval(msg.sender, spender, _allowance[msg.sender][spender]);
+        return true;
+    }
+
+    modifier onlyOwner{
+        require(msg.sender == owner , "only owner can call");
+        _;
+    }
+
+    function burn()public onlyOwner() returns(bool success){
+        _totalSupply -= Mint_Amount;
+        emit Transfer(owner, address(0), Mint_Amount);
         return true;
     }
 }

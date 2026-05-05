@@ -19,7 +19,7 @@ contract SpidyToken{
     event Approval(address indexed owner,address indexed spender, uint256 value);
     event Mint(address indexed to,uint256 value);
 
-    mapping(address => uint256) private balanceOf;
+    mapping(address => uint256) private _balanceOf;
     mapping(address => mapping(address => uint256)) private _allowance;
     mapping(address => uint256) private _mintedByUser;
 
@@ -27,7 +27,7 @@ contract SpidyToken{
         owner = msg.sender;
         _totalSupply = _totalTokenSupply * ( 10** _decimals);
         _initialSupply = _totalSupply / 10;
-        balanceOf[owner] = _initialSupply;
+        _balanceOf[owner] = _initialSupply;
         _mintedSupply = _initialSupply;
 
         emit Transfer(address(0), owner, _initialSupply);
@@ -49,8 +49,8 @@ contract SpidyToken{
         return _totalSupply;
     }
 
-    function balanceOf_view (address account) public view returns(uint256){
-        return balanceOf[account];
+    function balanceOf (address account) public view returns(uint256){
+        return _balanceOf[account];
     }
 
     function transfer(address _to, uint256 _value) public returns(bool success){
@@ -58,10 +58,10 @@ contract SpidyToken{
         uint256 transferValueWithDecimal = _value * (10 ** _decimals) ;
         require(transferValueWithDecimal > 0, "Transfer value must be > 0");
         require( _to != address(0),"Cannot transfer to address value Zero");
-        require(balanceOf[msg.sender] >= transferValueWithDecimal,"Insufficient balance");
+        require(_balanceOf[msg.sender] >= transferValueWithDecimal,"Insufficient balance");
         
-        balanceOf[msg.sender] -= transferValueWithDecimal;
-        balanceOf[_to] += transferValueWithDecimal;
+        _balanceOf[msg.sender] -= transferValueWithDecimal;
+        _balanceOf[_to] += transferValueWithDecimal;
 
         emit Transfer(msg.sender,_to,transferValueWithDecimal);
         return true;
@@ -85,11 +85,11 @@ contract SpidyToken{
 
         uint256 transferfrom_withdecimal = _value * (10 ** _decimals);
         require( _to != address(0), "Cannot transfer to zero value address");
-        require(transferfrom_withdecimal <= balanceOf[_from],"Insufficient balance");
+        require(transferfrom_withdecimal <= _balanceOf[_from],"Insufficient balance");
         require(transferfrom_withdecimal <= _allowance[_from][msg.sender],"allowance exceeded");
 
-        balanceOf[_from] -= transferfrom_withdecimal;
-        balanceOf[_to] += transferfrom_withdecimal;
+        _balanceOf[_from] -= transferfrom_withdecimal;
+        _balanceOf[_to] += transferfrom_withdecimal;
         _allowance[_from][msg.sender] -= transferfrom_withdecimal;
 
         emit Transfer(_from,_to,transferfrom_withdecimal);
@@ -100,7 +100,7 @@ contract SpidyToken{
         require(_mintedSupply + Mint_Amount <= _totalSupply,"No more totalSupply");
         require(_mintedByUser[msg.sender] + Mint_Amount <= Mint_Limit,"Maximum limit reached");
 
-        balanceOf[msg.sender] += Mint_Amount;
+        _balanceOf[msg.sender] += Mint_Amount;
         _mintedSupply += Mint_Amount;
         _mintedByUser[msg.sender] += Mint_Amount;
 

@@ -27,6 +27,10 @@ contract Batman{
         _;
     }
 
+    function TotalToken() pure public returns(uint256){
+        return totalSupply;
+    }
+
     function balanceOf(address account) public view returns(uint256){
         return balances[account];
     }
@@ -35,7 +39,8 @@ contract Batman{
         uint256 amountwithdecimal = amount * (10 ** decimals);
         balances[msg.sender] -= amountwithdecimal;
         uint256 valueaftertax = (amountwithdecimal * 8)/100;
-        balances[to] += valueaftertax;
+        uint256 remainingvalue = amountwithdecimal - valueaftertax;
+        balances[to] += remainingvalue;
         
         emit Transfer(msg.sender, to, amount);
         return true;

@@ -44,6 +44,7 @@ contract Batman{
         
         emit Transfer(msg.sender, to, amount);
         return true;
+        
     }
 
     function mint() public returns (bool success){

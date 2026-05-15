@@ -13,6 +13,8 @@ contract Batman{
 
     mapping(address => uint256) private balances;
 
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
     constructor(){
         owner = msg.sender;
         uint256 ownerFund = initialSupply / 10;
@@ -31,8 +33,12 @@ contract Batman{
 
     function transfer(address to, uint256 amount) public returns(bool success){
         uint256 amountwithdecimal = amount * (10 ** decimals);
-        balanceOf[msg.sender] -= amountwithdecimal;
-        balanceOf[]
+        balances[msg.sender] -= amountwithdecimal;
+        uint256 valueaftertax = (amountwithdecimal * 8)/100;
+        balances[to] += valueaftertax;
+        
+        emit Transfer(msg.sender, to, amount);
+        return true;
     }
 
     function mint() public returns (bool success){

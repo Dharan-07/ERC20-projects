@@ -11,6 +11,8 @@ contract Batman{
     uint256 private initialSupply = totalSupply;
     uint256 private constant mint_amount = 5 * (10 ** decimals);
 
+    uint256 private burnvalue;
+
     mapping(address => uint256) private balances;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -37,18 +39,24 @@ contract Batman{
 
     function transfer(address to, uint256 amount) public returns(bool success){
         uint256 amountwithdecimal = amount * (10 ** decimals);
+        require(balances[msg.sender] >= amountwithdecimal, "Insufficient balance");
         balances[msg.sender] -= amountwithdecimal;
-        uint256 valueaftertax = (amountwithdecimal * 8)/100;
+        uint256 valueaftertax = (amountwithdecimal * 3)/100;
         uint256 remainingvalue = amountwithdecimal - valueaftertax;
         balances[to] += remainingvalue;
+        burnvalue  += valueaftertax;
+
         
-        emit Transfer(msg.sender, to, amount);
+        emit Transfer(msg.sender, to, remainingvalue);
         return true;
-        
     }
 
     function mint() public returns (bool success){
         balances[msg.sender] += mint_amount;
         return true;
+    }
+
+    function burn() public onlyOwner() returns(bool success){
+        burnvalue = 0;
     }
 }

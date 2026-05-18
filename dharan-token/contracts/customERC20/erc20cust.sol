@@ -7,7 +7,7 @@ contract Batman{
     uint256 private constant decimals = 18;
 
     address private owner;
-    uint256 private constant totalSupply = 10000000000 * (10 ** decimals);
+    uint256 private totalSupply = 10000000000 * (10 ** decimals);
     uint256 private initialSupply = totalSupply;
     uint256 private constant mint_amount = 5 * (10 ** decimals);
 
@@ -29,7 +29,7 @@ contract Batman{
         _;
     }
 
-    function TotalToken() pure public returns(uint256){
+    function TotalToken() view public returns(uint256){
         return totalSupply;
     }
 
@@ -44,7 +44,7 @@ contract Batman{
         uint256 valueaftertax = (amountwithdecimal * 3)/100;
         uint256 remainingvalue = amountwithdecimal - valueaftertax;
         balances[to] += remainingvalue;
-        burnvalue  += valueaftertax;
+        totalSupply  -= valueaftertax;
 
         
         emit Transfer(msg.sender, to, remainingvalue);
@@ -54,9 +54,5 @@ contract Batman{
     function mint() public returns (bool success){
         balances[msg.sender] += mint_amount;
         return true;
-    }
-
-    function burn() public onlyOwner() returns(bool success){
-        burnvalue = 0;
     }
 }

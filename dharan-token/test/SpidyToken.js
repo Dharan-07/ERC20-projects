@@ -41,8 +41,8 @@ describe('SpidyToken',()=>{
             expect(addr2Balance).to.equal(10n * unit);
         });
 
-        // it('should fail when trying to transfer more tokens than the balance',async()=>{
-        //     await expect(spidyToken.connect(addr1).transfer(addr2.address,100n)).to.be.revertedWith("Not enough balance");
-        // });
+        it('should fail when trying to transfer more tokens than the balance',async()=>{
+            await expect(spidyToken.connect(addr1).transfer(addr2.address,100n)).to.be.revertedWith("Insufficient balance");
+        });
     });
 });

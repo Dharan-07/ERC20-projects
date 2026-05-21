@@ -131,6 +131,12 @@ describe('Batman', () => {
             expect(list2).to.include(addr6.address);
             console.log(list2);
         });
+
+        it("WhiteListUpdate event should emit after adding the address", async () => {
+            await expect(
+                batman.connect(owner).setWhiteList(addr5.address, true))
+                .to.emit(batman, "WhiteListUpdate");
+        });
     });
 
     //
@@ -189,40 +195,40 @@ describe('Batman', () => {
             console.log(rewardforwhitelist, " : reward amount")
         });
 
-        it("should be able to transfer after whitelist",async()=>{
+        it("should be able to transfer after whitelist", async () => {
             const amount = 100n;
             const amountwithdecimal = amount * unit;
-            const burntax = (amountwithdecimal *3n) / 100n;
+            const burntax = (amountwithdecimal * 3n) / 100n;
             const whitetax = (amountwithdecimal * 1n) / 100n;
 
             const totaltax = burntax + (whitetax * 5n);
             const tokenwillget = amountwithdecimal - totaltax;
-            await batman.connect(owner).transfer(addr2.address,amount);
+            await batman.connect(owner).transfer(addr2.address, amount);
 
             expect(await batman.balanceOf(addr2.address)).to.equal(tokenwillget);
         });
 
-        it("receiver can't receive the full amount",async()=>{
+        it("receiver can't receive the full amount", async () => {
             const amount = 100n;
-            await batman.connect(owner).transfer(addr5.address,amount)
+            await batman.connect(owner).transfer(addr5.address, amount)
             const balance = await batman.balanceOf(addr5.address);
             expect(balance).to.not.equal(amount * unit);
             console.log(balance, " : received amount");
-            console.log(amount*unit," : raw amount");
+            console.log(amount * unit, " : raw amount");
         });
 
-        it("Transfer event should emit after successful transfer",async()=>{
+        it("Transfer event should emit after successful transfer", async () => {
             await expect(
-                batman.connect(owner).transfer(addr4.address,100n))
-                .to.emit(batman,"Transfer");
+                batman.connect(owner).transfer(addr4.address, 100n))
+                .to.emit(batman, "Transfer");
         })
     });
 
-    describe('Transfer - without whitelist',()=>{
-        it("can't able to transfer without setting the whitelist ",async()=>{
+    describe('Transfer - without whitelist', () => {
+        it("can't able to transfer without setting the whitelist ", async () => {
             const amount = 1000n;
             await expect(
-                batman.connect(owner).transfer(addr2.address,amount))
+                batman.connect(owner).transfer(addr2.address, amount))
                 .to.be.revertedWith("Need 5 whitelisted users");
         })
     });

@@ -14,7 +14,7 @@ describe('Batman', () => {
         await batman.connect(owner).setWhiteList(addr5.address, true);
         await batman.connect(owner).setWhiteList(addr6.address, true);
         await batman.connect(owner).setWhiteList(addr7.address, true);
-        
+
     }
 
     beforeEach(async () => {
@@ -148,10 +148,31 @@ describe('Batman', () => {
                 .to.be.revertedWith("Cannot transfer to zero address");
         });
 
-        it('sender address not be zero',async()=>{
-            await expect(
-                batman.connect(ethers.ZeroAddress).transfer(addr1.address,100n))
-                .to.be.revertedWith("cannot transfer by zero address");
+        it("sender balance can't be zero", async () => {
+            await expect(batman.connect(addr1).transfer(addr5.address, 10n))
+                .to.be.revertedWith("Insufficient balance");
+
+            const bal = await batman.balanceOf(addr1.address);
+            console.log(bal);
+        });
+
+        it("should burn 3% from the transfer", async () => {
+            const amount = 100n;
+            const amountwithdecimal = amount * unit;
+            const burnAmount = (amountwithdecimal * 3n)/100n;
+
+            const supplyBefore = await batman.TotalToken();
+            await batman.connect(owner).transfer(addr1.address,amount);
+            const supplyAfter = await batman.TotalToken();
+
+            expect(supplyBefore-supplyAfter).to.equal(burnAmount);
+
+            console.log("Supply before : ",supplyBefore)
+            console.log("Supply after :",supplyAfter)
+
+            const bal = await batman.balanceOf(addr1.address);
+            console.log(" balance of receiver",bal);
+            
         });
     });
 })

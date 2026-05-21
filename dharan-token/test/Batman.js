@@ -47,8 +47,8 @@ describe('Batman', () => {
             const totalsupply = await batman.TotalToken();
             const expectedinitial = totalsupply / 10n;
             expect(ownerbalance).to.equal(expectedinitial);
-            console.log(expectedinitial);
-            console.log(ownerbalance);
+            console.log(expectedinitial, " : expected ");
+            console.log(ownerbalance," : owner balance");
         });
 
         it('Non owner should have zero balance initially', async () => {
@@ -167,12 +167,26 @@ describe('Batman', () => {
 
             expect(supplyBefore-supplyAfter).to.equal(burnAmount);
 
-            console.log("Supply before : ",supplyBefore)
-            console.log("Supply after :",supplyAfter)
+            console.log(supplyBefore," : Supply before")
+            console.log(supplyAfter," : Supply after")
 
             const bal = await batman.balanceOf(addr1.address);
             console.log(" balance of receiver",bal);
-            
         });
+
+        it("should transfer 1% to the whitelisted address",async()=>{
+            const amount = 100n;
+            const amountwithdecimal = amount * unit;
+            const rewardforwhitelist = (amountwithdecimal *1n)/100n
+
+            const balancebefore = await batman.balanceOf(addr7.address);
+            await batman.connect(owner).transfer(addr2.address,amount);
+            const balanceafter = await batman.balanceOf(addr7.address);
+            expect(balanceafter - balancebefore).to.equal(rewardforwhitelist);
+
+            console.log(balancebefore, " : before");
+            console.log(balanceafter, " : after");
+            console.log(rewardforwhitelist, " : reward amount")
+        })
     });
 })

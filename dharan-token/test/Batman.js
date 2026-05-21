@@ -189,7 +189,7 @@ describe('Batman', () => {
             console.log(rewardforwhitelist, " : reward amount")
         });
 
-        it("should be able to transfer after whitelist transfer",async()=>{
+        it("should be able to transfer after whitelist",async()=>{
             const amount = 100n;
             const amountwithdecimal = amount * unit;
             const burntax = (amountwithdecimal *3n) / 100n;
@@ -200,6 +200,15 @@ describe('Batman', () => {
             await batman.connect(owner).transfer(addr2.address,amount);
 
             expect(await batman.balanceOf(addr2.address)).to.equal(tokenwillget);
+        });
+
+        it("receiver can't receive the full amount",async()=>{
+            const amount = 100n;
+            await batman.connect(owner).transfer(addr5.address,amount)
+            const balance = await batman.balanceOf(addr5.address);
+            expect(balance).to.not.equal(amount * unit);
+            console.log(balance, " : received amount");
+            console.log(amount*unit," : raw amount")
         });
     });
 

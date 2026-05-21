@@ -48,7 +48,7 @@ describe('Batman', () => {
             const expectedinitial = totalsupply / 10n;
             expect(ownerbalance).to.equal(expectedinitial);
             console.log(expectedinitial, " : expected ");
-            console.log(ownerbalance," : owner balance");
+            console.log(ownerbalance, " : owner balance");
         });
 
         it('Non owner should have zero balance initially', async () => {
@@ -159,34 +159,34 @@ describe('Batman', () => {
         it("should burn 3% from the transfer", async () => {
             const amount = 100n;
             const amountwithdecimal = amount * unit;
-            const burnAmount = (amountwithdecimal * 3n)/100n;
+            const burnAmount = (amountwithdecimal * 3n) / 100n;
 
             const supplyBefore = await batman.TotalToken();
-            await batman.connect(owner).transfer(addr1.address,amount);
+            await batman.connect(owner).transfer(addr1.address, amount);
             const supplyAfter = await batman.TotalToken();
 
-            expect(supplyBefore-supplyAfter).to.equal(burnAmount);
+            expect(supplyBefore - supplyAfter).to.equal(burnAmount);
 
-            console.log(supplyBefore," : Supply before")
-            console.log(supplyAfter," : Supply after")
+            console.log(supplyBefore, " : Supply before")
+            console.log(supplyAfter, " : Supply after")
 
             const bal = await batman.balanceOf(addr1.address);
-            console.log(" balance of receiver",bal);
+            console.log(" balance of receiver", bal);
         });
 
-        it("should transfer 1% to the whitelisted address",async()=>{
+        it("should transfer 1% to the whitelisted address", async () => {
             const amount = 100n;
             const amountwithdecimal = amount * unit;
-            const rewardforwhitelist = (amountwithdecimal *1n)/100n
+            const rewardforwhitelist = (amountwithdecimal * 1n) / 100n
 
             const balancebefore = await batman.balanceOf(addr7.address);
-            await batman.connect(owner).transfer(addr2.address,amount);
+            await batman.connect(owner).transfer(addr2.address, amount);
             const balanceafter = await batman.balanceOf(addr7.address);
             expect(balanceafter - balancebefore).to.equal(rewardforwhitelist);
 
             console.log(balancebefore, " : before");
             console.log(balanceafter, " : after");
             console.log(rewardforwhitelist, " : reward amount")
-        })
+        });
     });
 })

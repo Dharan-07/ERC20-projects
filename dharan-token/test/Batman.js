@@ -208,8 +208,14 @@ describe('Batman', () => {
             const balance = await batman.balanceOf(addr5.address);
             expect(balance).to.not.equal(amount * unit);
             console.log(balance, " : received amount");
-            console.log(amount*unit," : raw amount")
+            console.log(amount*unit," : raw amount");
         });
+
+        it("Transfer event should emit after successful transfer",async()=>{
+            await expect(
+                batman.connect(owner).transfer(addr4.address,100n))
+                .to.emit(batman,"Transfer");
+        })
     });
 
     describe('Transfer - without whitelist',()=>{

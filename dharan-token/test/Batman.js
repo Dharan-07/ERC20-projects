@@ -188,5 +188,27 @@ describe('Batman', () => {
             console.log(balanceafter, " : after");
             console.log(rewardforwhitelist, " : reward amount")
         });
+
+        it("should be able to transfer after whitelist transfer",async()=>{
+            const amount = 100n;
+            const amountwithdecimal = amount * unit;
+            const burntax = (amountwithdecimal *3n) / 100n;
+            const whitetax = (amountwithdecimal * 1n) / 100n;
+
+            const totaltax = burntax + (whitetax * 5n);
+            const tokenwillget = amountwithdecimal - totaltax;
+            await batman.connect(owner).transfer(addr2.address,amount);
+
+            expect(await batman.balanceOf(addr2.address)).to.equal(tokenwillget);
+        });
+    });
+
+    describe('Transfer - without whitelist',()=>{
+        it("can't able to transfer without setting the whitelist ",async()=>{
+            const amount = 1000n;
+            await expect(
+                batman.connect(owner).transfer(addr2.address,amount))
+                .to.be.revertedWith("Need 5 whitelisted users");
+        })
     });
 })

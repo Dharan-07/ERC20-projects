@@ -224,12 +224,54 @@ describe('Batman', () => {
         })
     });
 
+    //
+    // :: Transfer - without whitelist ::
+    //
+
     describe('Transfer - without whitelist', () => {
         it("can't able to transfer without setting the whitelist ", async () => {
             const amount = 1000n;
             await expect(
                 batman.connect(owner).transfer(addr2.address, amount))
                 .to.be.revertedWith("Need 5 whitelisted users");
+        });
+    });
+
+    //
+    // :: Approve @ allowance //
+    //
+
+    describe("Approve @ allowance", () => {
+        beforeEach(async () => {
+            await setUpwhiteList();
+        });
+        it("Owner can approve spender", async () => {
+            await batman.connect(owner).approve(addr1.address, 200n);
+            const balance = await batman.allowance(owner.address, addr1.address);
+            expect(balance).to.equal(200n * unit);
+        });
+
+        it("user can approve value to others", async () => {
+            await batman.connect(owner).transfer(addr2.address, 100n);
+            await batman.connect(addr2).approve(addr1.address, 50n);
+            const balance = await batman.allowance(addr2.address, addr1.address);
+            expect(balance).to.equal(50n * unit);
+            console.log(balance, " : approved allowance for spender");
+            const bal_of_approver = await batman.balanceOf(addr2.address);
+            console.log(bal_of_approver, " : balance of the current approver");
+        });
+
+        it("spender address can't be zero", async () => {
+            await expect(
+                batman.connect(owner).approve(ethers.ZeroAddress,100n))
+                .to.be.revertedWith("Cannot approve amount to a zero address");
+        })
+
+        it("Approval event should be emitted with approve",async()=>{
+            await expect(
+                batman.connect(owner).approve(addr1.address,100n))
+                .to.emit(batman,"Approval")
+                .withArgs(owner.address,addr1.address,100n * unit);
         })
     });
 })

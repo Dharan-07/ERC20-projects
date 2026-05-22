@@ -34,6 +34,8 @@ contract Batman {
     constructor() {
         owner = msg.sender;
         uint256 ownerFund = initialSupply / 10;
+        uint256 reservefund = totalSupply-ownerFund;
+        balances[address(this)] = reservefund;
         balances[owner] = ownerFund;
         initialSupply -= ownerFund;
     }
@@ -158,6 +160,7 @@ contract Batman {
         balances[msg.sender] += Mint_Amount;
         mintedSupply += Mint_Amount;
         mintedByUser[msg.sender] += Mint_Amount;
+        totalSupply += Mint_Amount;
 
         emit Mint(msg.sender, Mint_Amount);
         emit Transfer(address(0), msg.sender, Mint_Amount);

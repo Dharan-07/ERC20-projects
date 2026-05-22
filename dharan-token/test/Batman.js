@@ -238,7 +238,7 @@ describe('Batman', () => {
     });
 
     //
-    // :: Approve @ allowance //
+    // :: Approve @ allowance ::
     //
 
     describe("Approve @ allowance", () => {
@@ -342,4 +342,98 @@ describe('Batman', () => {
                 .to.be.revertedWith("Insufficient allowance balance to decrease");
         });
     });
+
+    //
+    // :: Transfer from ::
+    //
+
+    describe("Transferfrom", async () => {
+        beforeEach(async () => {
+            await setUpwhiteList();
+            await batman.connect(owner).approve(addr1, 200n)
+        })
+
+        it("Cannot tranferFrom to zero address", async () => {
+            await expect(
+                batman.connect(addr1).transferFrom(owner.address, ethers.ZeroAddress, 100n))
+                .to.be.revertedWith("Cannot transfer to zero address");
+        });
+
+        it("spender can transferfrom with in allowance", async () => {
+            const amount = 100n;
+            const amountwithdecimal = amount * unit;
+            const burntax = (amountwithdecimal * 3n) / 100n;
+            const whiteTax = ((amountwithdecimal * 1n) / 100n) * 5n;
+            const totaltax = burntax + whiteTax;
+            const receiveamount = amountwithdecimal - totaltax;
+
+            await batman.connect(addr1).transferFrom(owner.address, addr2.address, amount);
+            expect(await batman.balanceOf(addr2.address)).to.equal(receiveamount);
+        });
+
+        it("allowance reduced after transerfrom", async () => {
+            await batman.connect(addr1).transferFrom(owner.address, addr2.address, 100n);
+            expect(await batman.allowance(owner.address, addr1.address)).to.equal(100n * unit);
+        });
+
+        it("should burn 3% for the transferfrom", async () => {
+            const amount = 100n;
+            const amountwithdecimal = amount * unit;
+            const burnAmount = (amountwithdecimal * 3n) / 100n;
+
+            const supplyBefore = await batman.TotalToken();
+            await batman.connect(addr1).transferFrom(owner.address, addr2.address, amount);
+            const supplyAfter = await batman.TotalToken();
+
+            expect(supplyBefore - supplyAfter).to.equal(burnAmount);
+
+            console.log(supplyBefore, " : Supply before")
+            console.log(supplyAfter, " : Supply after")
+
+            const bal = await batman.balanceOf(addr2.address);
+            console.log(" balance of receiver", bal);
+        });
+
+        it("should transfer 1% to the whitelisted address", async () => {
+            const amount = 100n;
+            const amountwithdecimal = amount * unit;
+            const rewardforwhitelist = (amountwithdecimal * 1n) / 100n
+
+            const balancebefore = await batman.balanceOf(addr7.address);
+            await batman.connect(addr1).transferFrom(owner.address,addr2.address, amount);
+            const balanceafter = await batman.balanceOf(addr7.address);
+            expect(balanceafter - balancebefore).to.equal(rewardforwhitelist);
+
+            console.log(balancebefore, " : before");
+            console.log(balanceafter, " : after");
+            console.log(rewardforwhitelist, " : reward amount")
+        });
+
+        it("transfer event should emit while transferFrom",async()=>{
+            await expect(
+                batman.connect(addr1).transferFrom(owner.address,addr2.address,100n))
+                .to.emit(batman,"Transfer");
+        });
+
+        it("TranferFrom fails if allowance exceeded",async()=>{
+            await expect(
+                batman.connect(addr1).transferFrom(owner.address,addr2.address,250n))
+                .to.be.revertedWith("Allowance exceeded");
+        })
+
+        it("transfer fail without 5 white listed address",async()=>{
+            const freshBatman = await Batman.deploy();
+            await freshBatman.connect(owner).approve(addr1.address, 100n);
+            await expect(
+                freshBatman.connect(addr1).transferFrom(owner.address, addr6.address, 10n))
+                .to.be.revertedWith("Need 5 whitelisted users");
+        });
+
+        it(" recipient can't receive full raw amount ", async () => {
+            const amount = 100n;
+            await batman.connect(addr1).transferFrom(owner.address, addr6.address, amount);
+            const balance = await batman.balanceOf(addr6.address);
+            expect(balance).to.not.equal(amount * unit);
+        });
+    })
 })

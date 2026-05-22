@@ -400,7 +400,7 @@ describe('Batman', () => {
             const rewardforwhitelist = (amountwithdecimal * 1n) / 100n
 
             const balancebefore = await batman.balanceOf(addr7.address);
-            await batman.connect(addr1).transferFrom(owner.address,addr2.address, amount);
+            await batman.connect(addr1).transferFrom(owner.address, addr2.address, amount);
             const balanceafter = await batman.balanceOf(addr7.address);
             expect(balanceafter - balancebefore).to.equal(rewardforwhitelist);
 
@@ -409,19 +409,19 @@ describe('Batman', () => {
             console.log(rewardforwhitelist, " : reward amount")
         });
 
-        it("transfer event should emit while transferFrom",async()=>{
+        it("transfer event should emit while transferFrom", async () => {
             await expect(
-                batman.connect(addr1).transferFrom(owner.address,addr2.address,100n))
-                .to.emit(batman,"Transfer");
+                batman.connect(addr1).transferFrom(owner.address, addr2.address, 100n))
+                .to.emit(batman, "Transfer");
         });
 
-        it("TranferFrom fails if allowance exceeded",async()=>{
+        it("TranferFrom fails if allowance exceeded", async () => {
             await expect(
-                batman.connect(addr1).transferFrom(owner.address,addr2.address,250n))
+                batman.connect(addr1).transferFrom(owner.address, addr2.address, 250n))
                 .to.be.revertedWith("Allowance exceeded");
         })
 
-        it("transfer fail without 5 white listed address",async()=>{
+        it("transfer fail without 5 white listed address", async () => {
             const freshBatman = await Batman.deploy();
             await freshBatman.connect(owner).approve(addr1.address, 100n);
             await expect(
@@ -434,6 +434,95 @@ describe('Batman', () => {
             await batman.connect(addr1).transferFrom(owner.address, addr6.address, amount);
             const balance = await batman.balanceOf(addr6.address);
             expect(balance).to.not.equal(amount * unit);
+        });
+    })
+
+    //
+    // :: Mint ::
+    //
+
+    describe("Mint", () => {
+        const MINT_AMOUNT = 10n * unit;
+        const MINT_LIMIT = 100n * unit;
+
+        it("owner can mint the function", async () => {
+            await batman.burn()
+            const balbefore = await batman.balanceOf(owner)
+            await batman.connect(owner).mint()
+            const balafter = await batman.balanceOf(owner)
+            expect(balafter - balbefore).to.equal(MINT_AMOUNT)
+        });
+
+        it("Mint event should emit when mint", async () => {
+            await batman.burn()
+            await expect(batman.connect(owner).mint()).to.emit(batman, "Mint")
+                .withArgs(owner.address, MINT_AMOUNT)
+        });
+
+        it("Transfer event should emit when mint", async () => {
+            await batman.burn()
+            await expect(batman.connect(owner).mint()).to.emit(batman, "Transfer")
+                .withArgs(ethers.ZeroAddress, owner, MINT_AMOUNT)
+        });
+
+        it("non owner can't mint", async () => {
+            await expect(
+                batman.connect(addr1).mint())
+                .to.be.revertedWith("only owner have access to this function")
+        });
+
+        it("owner can mint up to Mint_Limit", async () => {
+
+            for (let i = 0; i < 11; i++) {
+                await batman.connect(owner).burn();
+            }
+
+            for (let i = 0; i < 10; i++) {
+                await batman.connect(owner).mint();
+            }
+
+            await expect(batman.connect(owner).mint())
+                .to.be.revertedWith("Maximum limit reached")
+        })
+    })
+
+    //
+    // :: burn :
+    //
+
+    describe("Burn", () => {
+
+        const MINT_AMOUNT = 10n * unit;
+
+        it("burn reduces the TotalSupply", async () => {
+            const bal1 = await batman.TotalToken()
+            await batman.connect(owner).burn()
+            const bal2 = await batman.TotalToken()
+            expect(bal1 - bal2).to.equal(MINT_AMOUNT)
+        });
+
+        it("owner can burn the token", async () => {
+            const balBefore = await batman.balanceOf(owner.address);
+            await batman.connect(owner).burn();
+            const balAfter = await batman.balanceOf(owner.address);
+            expect(balBefore - balAfter).to.equal(MINT_AMOUNT);
+        })
+
+        it("Transfer to zero address event emit on burn", async () => {
+            await expect(batman.connect(owner).burn())
+                .to.emit(batman, "Transfer")
+                .withArgs(owner.address, ethers.ZeroAddress, MINT_AMOUNT)
+        })
+        it("non-owner cannot burn", async () => {
+            await expect(batman.connect(addr1).burn())
+            .to.be.revertedWith("only owner have access to this function");
+        });
+
+        it("total supply to change after burn", async () => {
+            const supplyBefore = await batman.TotalToken();
+            await batman.connect(owner).burn();
+            const supplyAfter = await batman.TotalToken();
+            expect(supplyAfter).to.not.equal(supplyBefore);
         });
     })
 })

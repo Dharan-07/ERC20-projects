@@ -263,15 +263,83 @@ describe('Batman', () => {
 
         it("spender address can't be zero", async () => {
             await expect(
-                batman.connect(owner).approve(ethers.ZeroAddress,100n))
+                batman.connect(owner).approve(ethers.ZeroAddress, 100n))
                 .to.be.revertedWith("Cannot approve amount to a zero address");
-        })
+        });
 
-        it("Approval event should be emitted with approve",async()=>{
+        it("Approval event should be emitted with approve", async () => {
             await expect(
-                batman.connect(owner).approve(addr1.address,100n))
-                .to.emit(batman,"Approval")
-                .withArgs(owner.address,addr1.address,100n * unit);
-        })
+                batman.connect(owner).approve(addr1.address, 100n))
+                .to.emit(batman, "Approval")
+                .withArgs(owner.address, addr1.address, 100n * unit);
+        });
+
+        it("allowance should be zero before approve", async () => {
+            const allowed = await batman.allowance(owner.address, addr1.address);
+            expect(allowed).to.equal(0n);
+        });
+    });
+
+    //
+    // Increase @ Decrease allowance
+    //
+
+    describe("Increase @ Decrease allowance", () => {
+
+        it("Cannot Increase allowance for zero address", async () => {
+            await expect(batman.connect(owner).increaseAllowance(ethers.ZeroAddress, 50n))
+                .to.be.revertedWith("Cannot increase allowance to address value Zero");
+        });
+
+        it("Can Increase allowance", async () => {
+            await batman.connect(owner).approve(addr1.address, 100n);
+            await batman.connect(owner).increaseAllowance(addr1.address, 50n);
+            const allowed = await batman.allowance(owner.address, addr1.address);
+            expect(allowed).to.equal(150n * unit);
+            console.log(allowed);
+            console.log(150n * unit);
+        });
+
+        it("Cannot Decrease allowance for zero address", async () => {
+            await expect(batman.connect(owner).decreaseAllowance(ethers.ZeroAddress, 50n))
+                .to.be.revertedWith("cannot decrease allowance to address value Zero");
+        });
+
+        it("Can Decrease allowance", async () => {
+            await batman.connect(owner).approve(addr1.address, 100n);
+            await batman.connect(owner).decreaseAllowance(addr1.address, 50n);
+            const allowed = await batman.allowance(owner.address, addr1.address);
+            expect(allowed).to.equal(50n * unit);
+            console.log(allowed);
+            console.log(50n * unit);
+        });
+
+        it(" Other user can Increase allowance", async () => {
+            await batman.connect(addr4).approve(addr1.address, 100n);
+            await batman.connect(addr4).increaseAllowance(addr1.address, 50n);
+            const allowed = await batman.allowance(addr4.address, addr1.address);
+            expect(allowed).to.equal(150n * unit);
+        });
+
+        it("Other user can Decrease allowance", async () => {
+            await batman.connect(addr4).approve(addr1.address, 100n);
+            await batman.connect(addr4).decreaseAllowance(addr1.address, 50n);
+            const allowed = await batman.allowance(addr4.address, addr1.address);
+            expect(allowed).to.equal(50n * unit);
+        });
+
+        it("Approval event should emit while Increase allowance", async () => {
+            await batman.connect(addr4).approve(addr1.address, 100n);
+            await expect(
+                batman.connect(addr4).increaseAllowance(addr1.address, 50n))
+                .to.emit(batman, "Approval");
+        });
+
+        it("Can't decrease allowance below zero", async () => {
+            await batman.connect(addr2).approve(addr3.address, 20n);
+            await expect(
+                batman.connect(addr2).decreaseAllowance(addr3.address, 50n))
+                .to.be.revertedWith("Insufficient allowance balance to decrease");
+        });
     });
 })

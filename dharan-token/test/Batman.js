@@ -23,6 +23,10 @@ describe('Batman', () => {
         batman = await Batman.deploy();
     });
 
+    it("should return correct decimals", async () => {
+        expect(await batman.decimals()).to.equal(18);
+    });
+
     //
     //  :: deplyoment ::
     //
@@ -136,6 +140,20 @@ describe('Batman', () => {
             await expect(
                 batman.connect(owner).setWhiteList(addr5.address, true))
                 .to.emit(batman, "WhiteListUpdate");
+        });
+
+        it("can disable whitelist status", async () => {
+            await batman.setWhiteList(addr1.address, true);
+            await batman.setWhiteList(addr1.address, false);
+            const list = await batman.getwhitelistedaddress();
+            expect(list).to.include(addr1.address);
+        });
+
+        it("should not duplicate whitelist entries", async () => {
+            await batman.setWhiteList(addr1.address, true);
+            await batman.setWhiteList(addr1.address, true);
+            const list = await batman.getwhitelistedaddress();
+            expect(list.length).to.equal(1);
         });
     });
 
@@ -350,7 +368,7 @@ describe('Batman', () => {
     describe("Transferfrom", async () => {
         beforeEach(async () => {
             await setUpwhiteList();
-            await batman.connect(owner).approve(addr1, 200n)
+            await batman.connect(owner).approve(addr1.address, 200n)
         })
 
         it("Cannot tranferFrom to zero address", async () => {
@@ -484,6 +502,10 @@ describe('Batman', () => {
             await expect(batman.connect(owner).mint())
                 .to.be.revertedWith("Maximum limit reached")
         })
+        it("mint should fail if max supply exceeded", async () => {
+            await expect(batman.connect(owner).mint())
+                .to.be.revertedWith("Max supply exceeded");
+        });
     })
 
     //
@@ -491,6 +513,10 @@ describe('Batman', () => {
     //
 
     describe("Burn", () => {
+
+        beforeEach(async () => {
+            await setUpwhiteList()
+        })
 
         const MINT_AMOUNT = 10n * unit;
 
@@ -515,7 +541,7 @@ describe('Batman', () => {
         })
         it("non-owner cannot burn", async () => {
             await expect(batman.connect(addr1).burn())
-            .to.be.revertedWith("only owner have access to this function");
+                .to.be.revertedWith("only owner have access to this function");
         });
 
         it("total supply to change after burn", async () => {
@@ -523,6 +549,99 @@ describe('Batman', () => {
             await batman.connect(owner).burn();
             const supplyAfter = await batman.TotalToken();
             expect(supplyAfter).to.not.equal(supplyBefore);
+        });
+
+        it("burn should fail if owner balance too low", async () => {
+            await batman.connect(owner).transfer(addr1.address, 1000000000n)
+            for (let i = 0; i < 3; i++) {
+                await batman.connect(owner).mint()
+
+            }
+            const ownerBal = await batman.balanceOf(owner.address);
+            const burns = Number(ownerBal / (10n * unit));
+
+            for (let i = 0; i < burns; i++) {
+                await batman.burn();
+            }
+
+            await expect(batman.burn())
+                .to.be.revertedWith("Insufficient balance to burn");
+        });
+    })
+
+    describe("Whitelist", () => {
+        it("can disable whitelist without removing from array", async () => {
+            await batman.setWhiteList(addr1.address, true);
+            await batman.setWhiteList(addr1.address, false);
+            const list = await batman.getwhitelistedaddress();
+            expect(list.length).to.equal(1);
+        });
+
+        it("transfer skips disabled whitelist user", async () => {
+            await setUpwhiteList();
+            await batman.setWhiteList(addr3.address, false);
+            const before = await batman.balanceOf(addr3.address);
+            await batman.transfer(addr1.address, 100n);
+
+            const after = await batman.balanceOf(addr3.address);
+
+            expect(after).to.equal(before);
+        });
+
+        it("transferFrom skips disabled whitelist user", async () => {
+
+            await setUpwhiteList();
+            await batman.approve(addr1.address, 100n);
+            await batman.setWhiteList(addr4.address, false);
+
+            const before = await batman.balanceOf(addr4.address);
+
+            await batman.connect(addr1).transferFrom(owner.address, addr2.address, 50n);
+            const after = await batman.balanceOf(addr4.address);
+
+            expect(after).to.equal(before);
+        });
+
+        it("removeFromWhitelist iterates before finding target", async () => {
+            await setUpwhiteList();
+            await batman.removeFromWhiteList(addr7.address);
+
+            const list = await batman.getwhitelistedaddress();
+
+            expect(list).to.not.include(addr7.address);
+        });
+
+        it("disable already whitelisted user then transfer should skip reward", async () => {
+            await setUpwhiteList();
+            await batman.setWhiteList(addr3.address, false);
+
+            const before = await batman.balanceOf(addr3.address);
+
+            await batman.transfer(addr1.address, 100n);
+
+            const after = await batman.balanceOf(addr3.address);
+            expect(after).to.equal(before);
+        });
+
+        it("mint returns true", async () => {
+
+            await batman.burn();
+            expect(await batman.mint()).to.not.be.reverted;
+        });
+
+        it("burn returns true", async () => {
+
+            expect(await batman.burn()).to.not.be.reverted;
+        });
+
+        it("transferFrom fails when sender balance is insufficient", async () => {
+            await setUpwhiteList();
+
+            await batman.connect(owner).approve(addr1.address, 999999999999n);
+
+            await expect(
+                batman.connect(addr1).transferFrom(owner.address, addr2.address, 999999999999n))
+                .to.be.revertedWith("Insufficient balance");
         });
     })
 })

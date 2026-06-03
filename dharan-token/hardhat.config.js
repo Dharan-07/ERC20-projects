@@ -1,4 +1,19 @@
-const config = {
-  solidity: "0.8.20",
+import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-verify";
+import "dotenv/config";
+import("solidity-coverage");
+
+export default {
+  solidity: "0.8.30",
+
+  networks: {
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL,
+      accounts: [process.env.PRIVATE_KEY],
+    },
+  },
+  etherscan: {
+    apiKey: 
+      "Q2KZYU48DMYMX1WJI156PWUWHQ1EWF14RC",
+  },
 };
-export default config;

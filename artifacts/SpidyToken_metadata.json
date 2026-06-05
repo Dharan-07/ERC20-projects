@@ -47,6 +47,25 @@
 					{
 						"indexed": true,
 						"internalType": "address",
+						"name": "to",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "value",
+						"type": "uint256"
+					}
+				],
+				"name": "Mint",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
 						"name": "from",
 						"type": "address"
 					},
@@ -122,7 +141,7 @@
 						"type": "address"
 					}
 				],
-				"name": "balanceOf_view",
+				"name": "balanceOf",
 				"outputs": [
 					{
 						"internalType": "uint256",
@@ -131,6 +150,19 @@
 					}
 				],
 				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "burn",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "success",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -144,6 +176,67 @@
 					}
 				],
 				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "spender",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "value",
+						"type": "uint256"
+					}
+				],
+				"name": "decreaseAllowance",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "success",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "spender",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "value",
+						"type": "uint256"
+					}
+				],
+				"name": "increaseAllowance",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "success",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "mint",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "success",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -170,6 +263,19 @@
 					}
 				],
 				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "tokenLeft",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
 				"type": "function"
 			},
 			{
@@ -252,7 +358,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"dharan-token/contracts/SpidyToken.sol": "SpidyToken"
+			"dharan-token/contracts/own/SpidyToken.sol": "SpidyToken"
 		},
 		"evmVersion": "prague",
 		"libraries": {},
@@ -266,12 +372,12 @@
 		"remappings": []
 	},
 	"sources": {
-		"dharan-token/contracts/SpidyToken.sol": {
-			"keccak256": "0x4d1e9d1d572b80e15cda8998cee1e23068e42a3ca70a24401655120a1681cb37",
+		"dharan-token/contracts/own/SpidyToken.sol": {
+			"keccak256": "0x8896966b5edf14d4919c99e9eeab4f6c2f92e0e2112da3c34df22ea79339772e",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://401947a40c378f051159d702724c0f453f2d8a2ac6e2791031b182a4293cf151",
-				"dweb:/ipfs/QmeMku2TTUfnfz4jUs6hrK2ujoEqWUwZPaEPUAp819Q4pg"
+				"bzz-raw://b753ebf560ca2a7d87f6a6aaceb98334776beb25c5fbb43fef8a665a75978636",
+				"dweb:/ipfs/QmevbGivqx6oneuZpzepyZPfFFpdeDs3VoKiFt41xRfzsT"
 			]
 		}
 	},

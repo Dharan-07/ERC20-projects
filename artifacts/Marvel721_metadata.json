@@ -1,0 +1,77 @@
+{
+	"compiler": {
+		"version": "0.8.30+commit.73712a01"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"inputs": [],
+				"name": "name",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "symbol",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"ERC721/contracts/own721.sol/Marvel721.sol": "Marvel721"
+		},
+		"evmVersion": "prague",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"ERC721/contracts/own721.sol/Marvel721.sol": {
+			"keccak256": "0x2b471ee6fc4cf2ba9245c03b38962343f8d0c701abf9302556773941542e2bc7",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://f7ce78439bf633ebdd6b8f983be05fbe318cbb06a46abd8eb6b4419cd0371f7b",
+				"dweb:/ipfs/QmTtZGvrWs4B75kixALuQtVqxzMwPfH8ePksHGJhbmJ3Xv"
+			]
+		}
+	},
+	"version": 1
+}

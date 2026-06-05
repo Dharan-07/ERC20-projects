@@ -116,7 +116,6 @@ contract Batman is
             value
         );
     }
-*   
     function supportsInterface(
         bytes4 interfaceId
     )

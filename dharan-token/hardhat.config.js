@@ -9,7 +9,11 @@ export default {
   networks: {
     sepolia: {
       url: process.env.SEPOLIA_RPC_URL,
-      accounts: [process.env.PRIVATE_KEY],
+      accounts: [
+        process.env.ACC1_PRIVATE_KEY,
+        process.env.ACC2_PRIVATE_KEY,
+        process.env.ACC3_PRIVATE_KEY,
+      ],
     },
   },
   etherscan: {

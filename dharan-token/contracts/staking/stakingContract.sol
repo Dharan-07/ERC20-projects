@@ -15,6 +15,14 @@ contract StakingContract is Ownable, ReentrancyGuard {
     uint256 public stakingContractStartedAt;
     uint256 public totalStaked;
 
+    // reward percentage
+    uint256 public rewardFiveMin = 2;
+    uint256 public rewardTenMin = 5;
+    uint256 public rewardFifteenMin = 10;
+
+    uint256 public emergencyWithdrawFee = 500;
+    uint256 public collectedFees;
+
     enum stakeOptions {
         None,
         FiveMin,
@@ -44,7 +52,24 @@ contract StakingContract is Ownable, ReentrancyGuard {
     event Withdrawn(
         address indexed user,
         uint256 indexed stakedId,
-        uint256 amount
+        uint256 amount,
+        uint256 reward
+    );
+    event UpdateReward(
+        uint256 FiveMin, 
+        uint256 TenMin, 
+        uint256 FifeTeenMin
+    );
+    event UpdateFee(
+        uint256 oldFee, 
+        uint256 newFee
+    );
+
+    event EmergencyWithDraw(
+        address indexed user,
+        uint256 indexed stakeId,
+        uint256 amount,
+        uint256 fee
     );
 
     constructor(IERC20 _stakingToken, IERC20 _rewardToken) Ownable(msg.sender) {
@@ -53,7 +78,10 @@ contract StakingContract is Ownable, ReentrancyGuard {
         stakingContractStartedAt = block.timestamp;
     }
 
-    function stake(uint256 amount,stakeOptions period) external nonReentrant returns (uint256) {
+    function stake(
+        uint256 amount,
+        stakeOptions period
+    ) external nonReentrant returns (uint256) {
         require(amount > 0, "amount must be greater than zero");
         require(period != stakeOptions.None, "lock period must be specified");
 
@@ -88,15 +116,43 @@ contract StakingContract is Ownable, ReentrancyGuard {
         require(userStake.amount > 0, "Nothing to withdraw");
 
         uint256 amount = userStake.amount;
+        uint256 reward = calculateReward(msg.sender, stakeId);
+        userStake.reward = reward;
         userStake.active = false;
         userStake.amount = 0;
+
         stakingBalance[msg.sender] -= amount;
         totalStaked -= amount;
 
         stakingToken.safeTransfer(msg.sender, amount);
 
-        emit Withdrawn(msg.sender, stakeId, amount);
+        if (reward > 0 ){
+            rewardToken.safeTransfer( msg.sender, reward);
+        }
+
+        emit Withdrawn(msg.sender, stakeId, amount, reward);
         return true;
+    }
+
+    function calculateReward(
+        address user,
+        uint256 stakeId
+    ) public view returns (uint256) {
+        Stake memory perId = stakeInfo[user][stakeId];
+
+        if (!perId.active) {
+            return 0;
+        }
+        if (perId.period == stakeOptions.FiveMin) {
+            return (perId.amount * rewardFiveMin) / 100;
+        }
+        if (perId.period == stakeOptions.TenMin) {
+            return (perId.amount * rewardTenMin) / 100;
+        }
+        if (perId.period == stakeOptions.FifteenMin) {
+            return (perId.amount * rewardFifteenMin) / 100;
+        }
+        return 0;
     }
 
     function _lockperiod(stakeOptions period) internal pure returns (uint256) {
@@ -111,7 +167,10 @@ contract StakingContract is Ownable, ReentrancyGuard {
         revert("Invalid lock period");
     }
 
-    function getStake(address user,uint256 stakeId) external view returns (Stake memory) {
+    function getStake(
+        address user,
+        uint256 stakeId
+    ) external view returns (Stake memory) {
         require(stakeId < stakeCount[user], "Invalid stake ID");
         return stakeInfo[user][stakeId];
     }
@@ -139,5 +198,75 @@ contract StakingContract is Ownable, ReentrancyGuard {
         }
 
         return stakes;
+    }
+
+    function setReward(
+        uint256 five,
+        uint256 ten,
+        uint256 fifteen
+    ) external onlyOwner {
+        rewardFiveMin = five;
+        rewardTenMin = ten;
+        rewardFifteenMin = fifteen;
+
+        emit UpdateReward(five, ten, fifteen);
+    }
+
+    function setEmergencyWithdrawFee(uint256 fee) external onlyOwner {
+        require(fee <= 1000, "Fees must be less than 10%");
+
+        emit UpdateFee(emergencyWithdrawFee, fee);
+
+        emergencyWithdrawFee = fee;
+    }
+
+    function depositeRewardTokens(uint256 amount) external onlyOwner {
+        require(amount > 0, "Invalid Amount");
+
+        rewardToken.safeTransferFrom( 
+            msg.sender,
+            address(this), 
+            amount);
+    }
+
+    function emergencyWithdraw(uint256 stakeId) external nonReentrant returns(bool){
+        require(stakeId < stakeCount[msg.sender],"Invalid stakeId");
+
+        Stake storage userStake = stakeInfo[msg.sender][stakeId];
+        require(userStake.active,"Already Withdrawn");
+
+        uint256 amount = userStake.amount;
+        uint256 fee = amount * emergencyWithdrawFee / 10000 ;
+
+        uint256 withDeduction = amount - fee;
+
+        collectedFees += fee ;
+
+        userStake.active = false;
+        userStake.amount = 0 ;
+
+        stakingBalance[msg.sender] -= amount;
+        totalStaked -= amount;
+
+        stakingToken.transfer(
+            msg.sender,
+            withDeduction
+        );
+
+        emit EmergencyWithDraw(msg.sender, stakeId, withDeduction, fee);
+
+        return true;
+    }
+
+    function withDrawCollectedFee(address to) external onlyOwner{
+        require( to != address(0),"Invalid addresss");
+
+        uint256 amount = collectedFees;
+
+        require(amount > 0 ,"No fees");
+
+        collectedFees = 0;
+
+        stakingToken.safeTransfer(to, amount);
     }
 }

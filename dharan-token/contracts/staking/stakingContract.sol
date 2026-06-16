@@ -35,6 +35,7 @@ contract StakingContract is Ownable, ReentrancyGuard {
         uint256 startTime;
         uint256 endTime;
         uint256 reward;
+        uint256 rewardRate; // reawrd raet store in the struct while staking 
         stakeOptions period;
         bool active;
     }
@@ -95,6 +96,7 @@ contract StakingContract is Ownable, ReentrancyGuard {
             startTime: block.timestamp,
             endTime: block.timestamp + duration,
             reward: 0,
+            rewardRate: _getRewardRate(period),
             period: period,
             active: true
         });
@@ -143,16 +145,7 @@ contract StakingContract is Ownable, ReentrancyGuard {
         if (!perId.active) {
             return 0;
         }
-        if (perId.period == stakeOptions.FiveMin) {
-            return (perId.amount * rewardFiveMin) / 100;
-        }
-        if (perId.period == stakeOptions.TenMin) {
-            return (perId.amount * rewardTenMin) / 100;
-        }
-        if (perId.period == stakeOptions.FifteenMin) {
-            return (perId.amount * rewardFifteenMin) / 100;
-        }
-        return 0;
+        return perId.amount*perId.rewardRate / 100;
     }
 
     function _lockperiod(stakeOptions period) internal pure returns (uint256) {
@@ -268,5 +261,19 @@ contract StakingContract is Ownable, ReentrancyGuard {
         collectedFees = 0;
 
         stakingToken.safeTransfer(to, amount);
+    }
+
+    function _getRewardRate(stakeOptions period) internal view returns(uint256) {
+        if(period == stakeOptions.FiveMin){
+            return rewardFiveMin;
+        }
+        if(period == stakeOptions.TenMin){
+            return rewardTenMin;
+        }
+        if(period == stakeOptions.FifteenMin){
+            return rewardFifteenMin;
+        }
+
+        revert("Invalid period");
     }
 }

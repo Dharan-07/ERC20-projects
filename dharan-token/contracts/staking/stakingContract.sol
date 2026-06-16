@@ -20,7 +20,12 @@ contract StakingContract is Ownable, ReentrancyGuard {
     uint256 public rewardTenMin = 5;
     uint256 public rewardFifteenMin = 10;
 
-    uint256 public emergencyWithdrawFee = 500;
+    // emergencyWithdrawFee
+
+    uint256 public feeFiveMin = 2;
+    uint256 public feeTenMin = 3;
+    uint256 public feeFifteenMin = 5;
+
     uint256 public collectedFees;
 
     enum stakeOptions {
@@ -62,11 +67,12 @@ contract StakingContract is Ownable, ReentrancyGuard {
         uint256 FifeTeenMin
     );
     event UpdateFee(
-        uint256 oldFee, 
-        uint256 newFee
+        uint256 feeFiveMin, 
+        uint256 feeTenMin,
+        uint256 feeFifteenMin
     );
 
-    event EmergencyWithDraw(
+    event EmergencyWithdraw(
         address indexed user,
         uint256 indexed stakeId,
         uint256 amount,
@@ -129,6 +135,7 @@ contract StakingContract is Ownable, ReentrancyGuard {
         stakingToken.safeTransfer(msg.sender, amount);
 
         if (reward > 0 ){
+            require(rewardToken.balanceOf(address(this)) >= reward,"Insufficient reward tokens");
             rewardToken.safeTransfer( msg.sender, reward);
         }
 
@@ -140,6 +147,7 @@ contract StakingContract is Ownable, ReentrancyGuard {
         address user,
         uint256 stakeId
     ) public view returns (uint256) {
+        require(stakeId < stakeCount[user], "Invalid stake");
         Stake memory perId = stakeInfo[user][stakeId];
 
         if (!perId.active) {
@@ -176,6 +184,7 @@ contract StakingContract is Ownable, ReentrancyGuard {
         address user,
         uint256 stakeId
     ) external view returns (bool) {
+        require(stakeId < stakeCount[user], "Invalid stake");
         return stakeInfo[user][stakeId].active;
     }
 
@@ -205,15 +214,19 @@ contract StakingContract is Ownable, ReentrancyGuard {
         emit UpdateReward(five, ten, fifteen);
     }
 
-    function setEmergencyWithdrawFee(uint256 fee) external onlyOwner {
-        require(fee <= 1000, "Fees must be less than 10%");
+    function setEmergencyWithdrawFee(uint256 five, uint256 ten, uint256 fifteen) external onlyOwner {
+        require(five <= 10, "Fees must be less than 10%");
+        require(ten <= 10, "Fees must be less than 10%");
+        require(fifteen <= 10, "Fees must be less than 10%");
 
-        emit UpdateFee(emergencyWithdrawFee, fee);
+        emit UpdateFee(five,ten,fifteen);
 
-        emergencyWithdrawFee = fee;
+        feeFiveMin = five;
+        feeTenMin = ten;
+        feeFifteenMin = fifteen;
     }
 
-    function depositeRewardTokens(uint256 amount) external onlyOwner {
+    function depositRewardTokens(uint256 amount) external onlyOwner {
         require(amount > 0, "Invalid Amount");
 
         rewardToken.safeTransferFrom( 
@@ -229,7 +242,8 @@ contract StakingContract is Ownable, ReentrancyGuard {
         require(userStake.active,"Already Withdrawn");
 
         uint256 amount = userStake.amount;
-        uint256 fee = amount * emergencyWithdrawFee / 10000 ;
+        uint256 feeRate = _getEmergencyFee(userStake.period);
+        uint256 fee = amount * feeRate / 100 ;
 
         uint256 withDeduction = amount - fee;
 
@@ -241,17 +255,17 @@ contract StakingContract is Ownable, ReentrancyGuard {
         stakingBalance[msg.sender] -= amount;
         totalStaked -= amount;
 
-        stakingToken.transfer(
+        stakingToken.safeTransfer(
             msg.sender,
             withDeduction
         );
 
-        emit EmergencyWithDraw(msg.sender, stakeId, withDeduction, fee);
+        emit EmergencyWithdraw(msg.sender, stakeId, withDeduction, fee);
 
         return true;
     }
 
-    function withDrawCollectedFee(address to) external onlyOwner{
+    function withdrawCollectedFee(address to) external onlyOwner{
         require( to != address(0),"Invalid addresss");
 
         uint256 amount = collectedFees;
@@ -272,6 +286,21 @@ contract StakingContract is Ownable, ReentrancyGuard {
         }
         if(period == stakeOptions.FifteenMin){
             return rewardFifteenMin;
+        }
+
+        revert("Invalid period");
+    }
+
+    function _getEmergencyFee(stakeOptions period) internal view returns(uint256){
+
+        if(period == stakeOptions.FiveMin){
+            return feeFiveMin;
+        }
+        if(period == stakeOptions.TenMin){
+            return feeTenMin;
+        }
+        if(period == stakeOptions.FifteenMin){
+            return feeFifteenMin;
         }
 
         revert("Invalid period");

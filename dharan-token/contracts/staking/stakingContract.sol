@@ -309,7 +309,6 @@ pragma solidity ^0.8.18;
 
 //_________________________________________________________________________________________________________________________________
 
-
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -343,8 +342,8 @@ contract StakingContract is Ownable, ReentrancyGuard {
         uint256 amount;
         uint256 startTime;
         uint256 endTime;
-        // Snapshot values
-        uint256 reward;
+        uint256 totalReward;
+        uint256 claimedReward;
         uint256 rewardRate;
         uint256 emergencyFee;
         uint256 planId;
@@ -405,6 +404,12 @@ contract StakingContract is Ownable, ReentrancyGuard {
         uint256 fee
     );
 
+    event RewardClaimed(
+        address indexed user,
+        uint256 indexed stakeId,
+        uint256 amount
+    );
+
     event RewardDeposited(uint256 amount);
 
     event FeesWithdrawn(address indexed to, uint256 amount);
@@ -455,6 +460,7 @@ contract StakingContract is Ownable, ReentrancyGuard {
         require(duration > 0, "Invalid duration");
         require(rewardRate > 0, "Invalid reward");
         require(emergencyFee <= 100, "Invalid fee");
+        require(duration % 60 == 0, "Duration must be whole minutes");
 
         uint256 planId = nextPlanId;
 
@@ -480,6 +486,7 @@ contract StakingContract is Ownable, ReentrancyGuard {
         require(duration > 0, "Invalid duration");
         require(rewardRate > 0, "Invalid reward");
         require(emergencyFee <= 100, "Invalid fee");
+        require(duration % 60 == 0, "Duration must be whole minutes");
 
         Plan storage plan = plans[planId];
 
@@ -516,7 +523,7 @@ contract StakingContract is Ownable, ReentrancyGuard {
     ) external nonReentrant returns (uint256) {
         require(amount > 0, "Amount must be greater than zero");
 
-        Plan memory plan = plans[planId];
+        Plan storage plan = plans[planId];
 
         require(plan.active, "Invalid plan");
 
@@ -524,11 +531,14 @@ contract StakingContract is Ownable, ReentrancyGuard {
 
         uint256 stakeId = stakeCount[msg.sender];
 
+        uint256 totalReward = (amount * plan.rewardRate) / 100;
+
         stakeInfo[msg.sender][stakeId] = Stake({
             amount: amount,
             startTime: block.timestamp,
             endTime: block.timestamp + plan.duration,
-            reward: 0,
+            totalReward: totalReward,
+            claimedReward: 0,
             rewardRate: plan.rewardRate,
             emergencyFee: plan.emergencyFee,
             planId: planId,
@@ -562,9 +572,9 @@ contract StakingContract is Ownable, ReentrancyGuard {
 
         uint256 amount = userStake.amount;
 
-        uint256 reward = calculateReward(msg.sender, stakeId);
+        uint256 remainingReward = userStake.totalReward -
+            userStake.claimedReward;
 
-        userStake.reward = reward;
         userStake.active = false;
         userStake.amount = 0;
 
@@ -573,16 +583,16 @@ contract StakingContract is Ownable, ReentrancyGuard {
 
         stakingToken.safeTransfer(msg.sender, amount);
 
-        if (reward > 0) {
+        if (remainingReward > 0) {
             require(
-                rewardToken.balanceOf(address(this)) >= reward,
+                rewardToken.balanceOf(address(this)) >= remainingReward,
                 "Insufficient reward balance"
             );
 
-            rewardToken.safeTransfer(msg.sender, reward);
+            rewardToken.safeTransfer(msg.sender, remainingReward);
         }
 
-        emit Withdrawn(msg.sender, stakeId, amount, reward);
+        emit Withdrawn(msg.sender, stakeId, amount, remainingReward);
 
         return true;
     }
@@ -636,6 +646,59 @@ contract StakingContract is Ownable, ReentrancyGuard {
         return (userStake.amount * userStake.rewardRate) / 100;
     }
 
+    function pendingReward(
+        address user,
+        uint256 stakeId
+    ) public view returns (uint256) {
+        require(stakeId < stakeCount[user], "Invalid stake");
+
+        Stake memory s = stakeInfo[user][stakeId];
+
+        if (!s.active) {
+            return 0;
+        }
+
+        uint256 elapsed;
+
+        if (block.timestamp >= s.endTime) {
+            elapsed = s.endTime - s.startTime;
+        } else {
+            elapsed = block.timestamp - s.startTime;
+        }
+
+        // Completed whole minutes only
+        uint256 completedMinutes = elapsed / 60;
+
+        uint256 totalMinutes = (s.endTime - s.startTime) / 60;
+
+        // Safety check
+        if (completedMinutes > totalMinutes) {
+            completedMinutes = totalMinutes;
+        }
+
+        // Accurate formula
+        uint256 earned = (s.totalReward * completedMinutes) / totalMinutes;
+
+        return earned - s.claimedReward;
+    }
+
+    function claimReward(uint256 stakeId) external nonReentrant {
+        require(stakeId < stakeCount[msg.sender], "Invalid stake");
+        Stake storage s = stakeInfo[msg.sender][stakeId];
+
+        require(s.active, "Inactive stake");
+
+        uint256 reward = pendingReward(msg.sender, stakeId);
+
+        require(reward > 0, "No reward available");
+
+        s.claimedReward += reward;
+
+        rewardToken.safeTransfer(msg.sender, reward);
+
+        emit RewardClaimed(msg.sender, stakeId, reward);
+    }
+
     // --------------------------------------------------
     // View Functions
     // --------------------------------------------------
@@ -665,7 +728,7 @@ contract StakingContract is Ownable, ReentrancyGuard {
     function balanceOf(address user) external view returns (uint256) {
         return stakingBalance[user];
     }
-    
+
     function isStakeActive(
         address user,
         uint256 stakeId
@@ -721,5 +784,14 @@ contract StakingContract is Ownable, ReentrancyGuard {
 
     function stakingBalanceOfContract() external view returns (uint256) {
         return stakingToken.balanceOf(address(this));
+    }
+
+    function remainingreward(
+        address user,
+        uint256 stakeId
+    ) external view returns (uint256) {
+        Stake memory s = stakeInfo[user][stakeId];
+
+        return s.totalReward - s.claimedReward;
     }
 }

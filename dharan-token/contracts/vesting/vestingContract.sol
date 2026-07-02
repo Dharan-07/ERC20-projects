@@ -42,6 +42,10 @@ contract VestingContract is Ownable, ReentrancyGuard {
         require(address(_token) != address(0), "Invalid token");
     }
 
+    ///----------------
+    /// WRITE FUNCTIONS
+    ///----------------
+
     function vest(
         address beneficiary,
         uint256 amount,
@@ -80,6 +84,56 @@ contract VestingContract is Ownable, ReentrancyGuard {
         );
     }
 
+    function claim(uint256 vestId) external nonReentrant {
+        uint256 claimable = claimableAmount(msg.sender, vestId);
+        require(claimable > 0, "Nothing to claim");
+
+        VestingData storage v = vestingInfo[msg.sender][vestId];
+
+        unchecked {
+            // safe: claimable is always <= totalAmount - claimedAmount, proven in claimableAmount()
+            v.claimedAmount += claimable;
+        }
+
+        token.safeTransfer(msg.sender, claimable);
+
+        emit TokenClaimed(msg.sender, vestId, claimable);
+    }
+
+    function claimAll() external {
+        uint256 total;
+
+        for (uint256 i = 0; i < vestingCount[msg.sender]; i++) {
+            uint256 claimable = claimableAmount(msg.sender, i);
+
+            if (claimable > 0) {
+                vestingInfo[msg.sender][i].claimedAmount += claimable;
+                total += claimable;
+
+                 emit TokenClaimed(msg.sender, i, claimable); // to get info about each vestId
+            }
+        }
+
+        require(total > 0, "Nothing to claim");
+
+        token.safeTransfer(msg.sender, total);
+    }
+
+    ///--------------
+    /// READ FUNCTION
+    ///--------------
+
+    function releasedAmount(
+        address beneficiary,
+        uint256 vestId
+    ) public view returns (uint256) {
+        VestingData memory v = vestingInfo[beneficiary][vestId];
+
+        require(v.initialized, "Invalid vesting");
+
+        return _releasedAmount(v);
+    }
+
     function _releasedAmount(
         VestingData memory v
     ) internal view returns (uint256) {
@@ -114,19 +168,18 @@ contract VestingContract is Ownable, ReentrancyGuard {
         return released - v.claimedAmount;
     }
 
-    function claim(uint256 vestId) external nonReentrant {
-        uint256 claimable = claimableAmount(msg.sender, vestId);
-        require(claimable > 0, "Nothing to claim");
+    ///--------------
+    /// RECOVER TOKEN
+    ///--------------
 
-        VestingData storage v = vestingInfo[msg.sender][vestId];
-
-        unchecked {
-            // safe: claimable is always <= totalAmount - claimedAmount, proven in claimableAmount()
-            v.claimedAmount += claimable;
-        }
-
-        token.safeTransfer(msg.sender, claimable);
-
-        emit TokenClaimed(msg.sender, vestId, claimable);
+    function recoverToken(
+        IERC20 otherToken,
+        uint256 amount
+    ) external onlyOwner {
+        require(
+            address(otherToken) != address(token),
+            "cannot recover vesting token"
+        );
+        otherToken.safeTransfer(owner(), amount);
     }
 }

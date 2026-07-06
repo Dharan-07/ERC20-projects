@@ -110,7 +110,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
                 vestingInfo[msg.sender][i].claimedAmount += claimable;
                 total += claimable;
 
-                 emit TokenClaimed(msg.sender, i, claimable); // to get info about each vestId
+                emit TokenClaimed(msg.sender, i, claimable); // to get info about each vestId
             }
         }
 
@@ -139,15 +139,21 @@ contract VestingContract is Ownable, ReentrancyGuard {
     ) internal view returns (uint256) {
         uint256 elapsedPeriods = (block.timestamp - v.startTime) / v.timeUnit;
 
-        if (elapsedPeriods < v.cliffPeriod) {
+        // Still inside cliff
+        if (elapsedPeriods <= v.cliffPeriod) {
             return 0;
         }
 
-        if (elapsedPeriods >= v.vestingPeriod) {
+        // Vesting starts after the cliff
+        uint256 vestedPeriods = elapsedPeriods - v.cliffPeriod;
+
+        // Fully vested
+        if (vestedPeriods >= v.vestingPeriod) {
             return v.totalAmount;
         }
 
-        return (v.totalAmount * elapsedPeriods) / v.vestingPeriod;
+        // Linear vesting after the cliff
+        return (v.totalAmount * vestedPeriods) / v.vestingPeriod;
     }
 
     function claimableAmount(

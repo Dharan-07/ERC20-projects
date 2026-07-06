@@ -100,7 +100,7 @@ contract VestingContract is Ownable, ReentrancyGuard {
         emit TokenClaimed(msg.sender, vestId, claimable);
     }
 
-    function claimAll() external {
+    function claimAll() external nonReentrant {
         uint256 total;
 
         for (uint256 i = 0; i < vestingCount[msg.sender]; i++) {
